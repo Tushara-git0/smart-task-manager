@@ -1,0 +1,67 @@
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+from sqlalchemy import and_
+from typing import List, Optional
+from pydantic import BaseModel
+
+from app.core.database import get_db
+from app.core.security import get_current_user, require_role
+from app.models.user import User
+from app.models.team import Team, TeamMember
+from app.models.task import Task
+
+router = APIRouter(prefix="/teams", tags=["Teams"])
+
+class TeamCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    member_ids: List[int] = []
+
+class TeamResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    manager_id: int
+    members: List[dict]
+    tasks_count: int
+
+    class Config:
+        from_attributes = True
+
+@router.post("/", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
+async def create_team(
+    team_data: TeamCreate,
+    current_user: User = Depends(require_role("manager")),
+    db: Session = Depends(get_db)
+):
+    team = Team(
+        name=team_data.name,
+        description=team_data.description,
+        manager_id=current_user.id
+    )
+    db.add(team)
+    db.commit()
+    db.refresh(team)
+    
+    for user_id in team_data.member_ids:
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            member = TeamMember(team_id=team.id, user_id=user_id)
+            db.add(member)
+    
+    db.commit()
+    return team
+
+@router.get("/", response_model=List[TeamResponse])
+async def get_teams(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Team)
+    if current_user.role == "employee":
+        query = query.join(TeamMember).filter(TeamMember.user_id == current_user.id)
+    elif current_user.role == "manager":
+        query = query.filter(Team.manager_id == current_user.id)
+    
+    teams = query.all()
+    return teams

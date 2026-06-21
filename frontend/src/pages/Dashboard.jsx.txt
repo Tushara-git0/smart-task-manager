@@ -1,0 +1,104 @@
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+
+const Dashboard = () => {
+  const { user } = useAuth();
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: async () => {
+      const response = await api.get('/dashboard/stats');
+      return response.data;
+    },
+    refetchInterval: 30000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!stats) return null;
+
+  const priorityData = {
+    labels: ['Low', 'Medium', 'High', 'Critical'],
+    datasets: [{
+      data: stats.priority_stats.map(p => p.count),
+      backgroundColor: ['#10B981', '#F59E0B', '#F97316', '#EF4444'],
+    }]
+  };
+
+  const statusData = {
+    labels: ['Pending', 'In Progress', 'Review', 'Completed', 'Cancelled'],
+    datasets: [{
+      data: stats.status_stats.map(s => s.count),
+      backgroundColor: ['#94A3B8', '#3B82F6', '#8B5CF6', '#10B981', '#EF4444'],
+    }]
+  };
+
+  const StatCard = ({ title, value, color }) => (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+      <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+      <p className={`text-2xl font-bold ${color} mt-1`}>{value}</p>
+    </div>
+  );
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <span className="text-sm text-gray-500 dark:text-gray-400">Welcome, {user?.name}</span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Total Tasks" value={stats.total_tasks} color="text-blue-600 dark:text-blue-400" />
+        <StatCard title="Completed" value={stats.completed_tasks} color="text-green-600 dark:text-green-400" />
+        <StatCard title="In Progress" value={stats.in_progress} color="text-yellow-600 dark:text-yellow-400" />
+        <StatCard title="Overdue" value={stats.overdue_tasks} color="text-red-600 dark:text-red-400" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Priority Distribution</h3>
+          <div className="h-64">
+            <Doughnut data={priorityData} options={{ responsive: true, maintainAspectRatio: false }} />
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Status Distribution</h3>
+          <div className="h-64">
+            <Doughnut data={statusData} options={{ responsive: true, maintainAspectRatio: false }} />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Weekly Activity</h3>
+        <div className="space-y-2">
+          {stats.weekly_stats?.map((day) => (
+            <div key={day.date} className="flex items-center gap-4">
+              <span className="text-sm text-gray-600 dark:text-gray-400 w-24">{day.date}</span>
+              <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full"
+                  style={{ width: `${(day.tasks / 10) * 100}%` }}
+                />
+              </div>
+              <span className="text-sm text-gray-600 dark:text-gray-400">{day.tasks} tasks</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;

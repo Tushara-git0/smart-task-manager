@@ -1,0 +1,143 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import func, and_, desc
+from datetime import datetime, timedelta
+
+from app.core.database import get_db
+from app.core.security import get_current_user
+from app.models.user import User
+from app.models.task import Task, TaskStatus, TaskPriority, TaskAssignment
+from app.models.team import Team, TeamMember
+from app.models.activity_log import ActivityLog
+
+router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+
+@router.get("/stats")
+async def get_dashboard_stats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    tasks_query = db.query(Task)
+    
+    if current_user.role == "employee":
+        tasks_query = tasks_query.join(TaskAssignment).filter(TaskAssignment.user_id == current_user.id)
+    elif current_user.role == "team_lead":
+        team_ids = db.query(TeamMember.team_id).filter(
+            and_(
+                TeamMember.user_id == current_user.id,
+                TeamMember.role == "lead"
+            )
+        )
+        tasks_query = tasks_query.filter(Task.team_id.in_(team_ids))
+    elif current_user.role == "manager":
+        team_ids = db.query(Team.id).filter(Team.manager_id == current_user.id)
+        tasks_query = tasks_query.filter(Task.team_id.in_(team_ids))
+    
+    total = tasks_query.count()
+    completed = tasks_query.filter(Task.status == TaskStatus.COMPLETED).count()
+    pending = tasks_query.filter(Task.status == TaskStatus.PENDING).count()
+    in_progress = tasks_query.filter(Task.status == TaskStatus.IN_PROGRESS).count()
+    review = tasks_query.filter(Task.status == TaskStatus.REVIEW).count()
+    
+    now = datetime.utcnow()
+    overdue = tasks_query.filter(
+        and_(
+            Task.due_date < now,
+            Task.status != TaskStatus.COMPLETED,
+            Task.status != TaskStatus.CANCELLED
+        )
+    ).count()
+    
+    priority_stats = db.query(
+        Task.priority,
+        func.count(Task.id).label('count')
+    ).filter(Task.id.in_(tasks_query.subquery())).group_by(Task.priority).all()
+    
+    status_stats = db.query(
+        Task.status,
+        func.count(Task.id).label('count')
+    ).filter(Task.id.in_(tasks_query.subquery())).group_by(Task.status).all()
+    
+    weekly_stats = []
+    for i in range(7):
+        day = now - timedelta(days=i)
+        day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day.replace(hour=23, minute=59, second=59, microsecond=999999)
+        count = db.query(Task).filter(
+            and_(
+                Task.created_at >= day_start,
+                Task.created_at <= day_end,
+                Task.id.in_(tasks_query.subquery())
+            )
+        ).count()
+        weekly_stats.append({"date": day.strftime("%Y-%m-%d"), "tasks": count})
+    
+    return {
+        "total_tasks": total,
+        "completed_tasks": completed,
+        "pending_tasks": pending,
+        "in_progress": in_progress,
+        "review_tasks": review,
+        "overdue_tasks": overdue,
+        "completion_rate": round((completed / total * 100) if total > 0 else 0, 2),
+        "priority_stats": [{"priority": p[0].value, "count": p[1]} for p in priority_stats],
+        "status_stats": [{"status": s[0].value, "count": s[1]} for s in status_stats],
+        "weekly_stats": weekly_stats,
+        "user_role": current_user.role.value
+    }
+
+@router.get("/activity")
+async def get_activity_logs(
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(ActivityLog)
+    
+    if current_user.role == "employee":
+        query = query.filter(ActivityLog.user_id == current_user.id)
+    
+    logs = query.order_by(desc(ActivityLog.created_at)).limit(limit).all()
+    return [
+        {
+            "id": log.id,
+            "action": log.action,
+            "user_id": log.user_id,
+            "task_id": log.task_id,
+            "details": log.details,
+            "created_at": log.created_at.isoformat()
+        }
+        for log in logs
+    ]
+
+@router.get("/team-performance")
+async def get_team_performance(
+    current_user: User = Depends(require_role("manager")),
+    db: Session = Depends(get_db)
+):
+    teams = db.query(Team).filter(Team.manager_id == current_user.id).all()
+    if current_user.role == "admin":
+        teams = db.query(Team).all()
+    
+    performance = []
+    for team in teams:
+        team_tasks = db.query(Task).filter(Task.team_id == team.id)
+        total = team_tasks.count()
+        completed = team_tasks.filter(Task.status == TaskStatus.COMPLETED).count()
+        
+        performance.append({
+            "team_id": team.id,
+            "team_name": team.name,
+            "total_tasks": total,
+            "completed_tasks": completed,
+            "completion_rate": round((completed / total * 100) if total > 0 else 0, 2),
+            "overdue_tasks": team_tasks.filter(
+                and_(
+                    Task.due_date < datetime.utcnow(),
+                    Task.status != TaskStatus.COMPLETED,
+                    Task.status != TaskStatus.CANCELLED
+                )
+            ).count()
+        })
+    
+    return performance

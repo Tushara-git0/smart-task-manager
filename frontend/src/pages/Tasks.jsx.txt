@@ -1,0 +1,118 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../services/api';
+import TaskCard from '../components/TaskCard';
+import toast from 'react-hot-toast';
+
+const Tasks = () => {
+  const queryClient = useQueryClient();
+  const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium' });
+  const [showForm, setShowForm] = useState(false);
+
+  const { data: tasks, isLoading } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: async () => {
+      const response = await api.get('/tasks');
+      return response.data;
+    },
+  });
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (taskData) => {
+      const response = await api.post('/tasks', taskData);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['tasks']);
+      toast.success('Task created!');
+      setShowForm(false);
+      setNewTask({ title: '', description: '', priority: 'medium' });
+    },
+    onError: () => toast.error('Failed to create task'),
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    createTaskMutation.mutate(newTask);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tasks</h1>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          {showForm ? 'Cancel' : '+ New Task'}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
+            <input
+              type="text"
+              value={newTask.title}
+              onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+              className="mt-1 w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+            <textarea
+              value={newTask.description}
+              onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+              className="mt-1 w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              rows="3"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+            <select
+              value={newTask.priority}
+              onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
+              className="mt-1 w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            disabled={createTaskMutation.isLoading}
+            className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+          >
+            {createTaskMutation.isLoading ? 'Creating...' : 'Create Task'}
+          </button>
+        </form>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {tasks?.map((task) => (
+          <TaskCard key={task.id} task={task} />
+        ))}
+      </div>
+
+      {tasks?.length === 0 && (
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+          No tasks yet. Create your first task!
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Tasks;

@@ -1,0 +1,27 @@
+import pytest
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_create_task():
+    client.post("/api/v1/auth/register", json={
+        "name": "Test User",
+        "email": "test@example.com",
+        "phone": "1234567890",
+        "password": "Test123!"
+    })
+    
+    login_response = client.post(
+        "/api/v1/auth/login",
+        data={"username": "test@example.com", "password": "Test123!"}
+    )
+    token = login_response.json()["access_token"]
+    
+    response = client.post(
+        "/api/v1/tasks",
+        json={"title": "Test Task", "priority": "high"},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    assert response.json()["title"] == "Test Task"

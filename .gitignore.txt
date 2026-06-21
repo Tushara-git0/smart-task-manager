@@ -1,0 +1,395 @@
+# ============================
+# Python
+# ============================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv
+.virtualenv
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# ============================
+# Node / Frontend
+# ============================
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+
+# Node version management
+.nvmrc
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.bsb.lock
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# ============================
+# IDE / Editor
+# ============================
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Visual Studio
+*.sln
+*.suo
+*.user
+*.userosscache
+*.ncrunchproject
+*.userprefs
+
+# IntelliJ IDEA / PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*
+.\#*
+
+# ============================
+# OS / System
+# ============================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*.pid
+*.lock
+.*.swp
+
+# ============================
+# Database
+# ============================
+
+*.db
+*.sqlite
+*.sqlite3
+*.pgsql
+*.mdb
+
+# ============================
+# Docker
+# ============================
+
+*.log
+*.pid
+*.pid.lock
+docker-compose.override.yml
+.dockerignore
+
+# ============================
+# Logs & Temporary Files
+# ============================
+
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+*.tmp
+*.temp
+
+# ============================
+# Secret Files
+# ============================
+
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+.secrets
+*.secret
+.env.local
+.env.*.local
+
+# ============================
+# Project Specific
+# ============================
+
+# Backend
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/.venv
+backend/venv/
+backend/static/
+backend/media/
+backend/alembic/versions/*.pyc
+backend/alembic/versions/__pycache__/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.vite/
+frontend/src/__pycache__/
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+.tox/
+
+# Postman
+postman/*.postman_collection.json
+postman/*.postman_environment.json
+
+# Deployment
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+.secrets
+*.secret
+
+# ============================
+# Backup Files
+# ============================
+
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*.save
+*.swp
+*~
+
+# ============================
+# Archive Files
+# ============================
+
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.tgz
+*.gz
+*.bz2
+*.xz
+
+# ============================
+# Media / Uploads
+# ============================
+
+media/
+staticfiles/
+uploads/
+downloads/
+*.mp4
+*.mp3
+*.wav
+*.avi
+*.mov
+*.mkv
+*.flv
+*.wmv
+
+# ============================
+# Documentation Build
+# ============================
+
+docs/_build/
+docs/_static/
+docs/_templates/
+site/

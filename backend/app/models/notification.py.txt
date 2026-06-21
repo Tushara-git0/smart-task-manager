@@ -1,0 +1,15 @@
+from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, DateTime
+from sqlalchemy.orm import relationship
+from app.models.base import BaseModel
+from datetime import datetime
+
+class Notification(BaseModel):
+    __tablename__ = "notifications"
+    
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    message = Column(String(500), nullable=False)
+    is_read = Column(Boolean, default=False)
+    type = Column(String(50))  # task_assigned, deadline_near, status_changed
+    link = Column(String(500))
+    
+    user = relationship("User", back_populates="notifications")
