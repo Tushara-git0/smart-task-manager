@@ -20,14 +20,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
-      # IMPORTANT: Because your project uses 'docker-compose', we build everything at once!
+      # FIXED: We find the lowercase repo name in a safe way
       - name: Build and push Docker images
         run: |
+          # Convert the repository name to lowercase using standard bash command
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          echo "Building Docker images..."
           docker-compose -f docker-compose.yml build
-          docker tag task-management-system_backend:latest ghcr.io/${{ github.repository | lower }}/backend:latest
-          docker tag task-management-system_frontend:latest ghcr.io/${{ github.repository | lower }}/frontend:latest
-          docker push ghcr.io/${{ github.repository | lower }}/backend:latest
-          docker push ghcr.io/${{ github.repository | lower }}/frontend:latest
+          
+          echo "Tagging images with lowercase repo name..."
+          docker tag task-management-system_backend:latest ghcr.io/$REPO_LOWER/backend:latest
+          docker tag task-management-system_frontend:latest ghcr.io/$REPO_LOWER/frontend:latest
+          
+          echo "Pushing images to GitHub Container Registry..."
+          docker push ghcr.io/$REPO_LOWER/backend:latest
+          docker push ghcr.io/$REPO_LOWER/frontend:latest
 
   deploy-to-render:
     runs-on: ubuntu-latest
